@@ -20,5 +20,3 @@ const showVideo = () => {
     showToast();
     showVideo();
 })();
-
-
