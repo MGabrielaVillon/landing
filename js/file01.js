@@ -1,8 +1,39 @@
 "use strict"; // Activa el modo estricto para que JavaScript detecte errores comunes.
 
-import { fetchProducts } from './functions.js'; // Importa la función fetchProducts desde el archivo functions.js.
+import { fetchProducts, fetchCategories } from './functions.js'; // Importa las funciones desde el archivo functions.js.
 
+/**
+ * Carga y renderiza las categorías disponibles en el elemento select con id "categories".
+ * @returns {Promise<void>} No retorna un valor, actualiza el DOM directamente.
+ */
+const renderCategories = async () => {
+    try {
+        const result = await fetchCategories('https://data-dawm.github.io/datum/reseller/categories.xml');
+        if (result.success) {
+            const container = document.getElementById('categories');
+            if (container) {
+                container.innerHTML = `<option disabled selected>Seleccione una categoría</option>`;
+                const categoriesXML = result.body;
+                const categories = categoriesXML.getElementsByTagName('category');
+                for (let category of categories) {
+                    const id = category.getElementsByTagName('id')[0].textContent;
+                    const name = category.getElementsByTagName('name')[0].textContent;
+                    let categoryHTML = `<option value="${id}">${name}</option>`;
+                    container.innerHTML += categoryHTML;
+                }
+            }
+        } else {
+            alert(`Error: ${result.body}`);
+        }
+    } catch (error) {
+        alert(`Error: ${error.message}`);
+    }
+};
 
+/**
+ * Muestra el toast interactivo si existe el elemento en el DOM.
+ * @returns {void}
+ */
 const showToast = () => {
     const toastElement = document.getElementById('toast-interactive'); // Obtiene el elemento con id 'toast-interactive'.
     if (toastElement) {
@@ -20,6 +51,10 @@ const showVideo = () => {
     }
 };
 
+/**
+ * Solicita la lista de productos y renderiza hasta seis tarjetas en el contenedor del DOM.
+ * @returns {Promise<{success: boolean, body: any}>} La promesa con el resultado de la petición de productos.
+ */
 const renderProducts = () => {
     return fetchProducts('https://data-dawm.github.io/datum/reseller/products.json') // Llama a fetchProducts con la URL de los productos.
         .then(result => {
@@ -67,4 +102,5 @@ const renderProducts = () => {
     showToast(); // Muestra el toast al cargar la página.
     showVideo(); // Activa el evento para el botón de video.
     renderProducts(); // Llama a renderProducts para cargar y mostrar los productos.
+    renderCategories(); // Llama a renderCategories para cargar y mostrar las categorías.
 })();

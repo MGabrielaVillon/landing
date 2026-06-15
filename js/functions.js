@@ -2,6 +2,11 @@
 
 // Archivo de funciones JavaScript
 
+/**
+ * Solicita un recurso JSON de productos y devuelve un objeto con el estado de la operación.
+ * @param {string} url - URL desde la que se obtienen los productos.
+ * @returns {Promise<{success: boolean, body: any}>} Objeto con el resultado de la petición.
+ */
 const fetchProducts = (url) => {
   // Inicia la petición HTTP a la URL recibida y retorna la promesa resultante.
   return fetch(url)
@@ -30,5 +35,31 @@ const fetchProducts = (url) => {
     });
 };
 
-// Exporta la función para que pueda ser utilizada en otros módulos.
-export { fetchProducts };
+// Exporta las funciones para que puedan ser utilizadas en otros módulos.
+/**
+ * Solicita un XML de categorías y lo convierte en un Document XML.
+ * @param {string} url - URL del recurso XML de categorías.
+ * @returns {Promise<{success: boolean, body: Document|string}>} Objeto con el resultado y el XML parseado.
+ */
+let fetchCategories = async (url) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
+    }
+    const text = await response.text();
+    const parser = new DOMParser();
+    const data = await parser.parseFromString(text, "application/xml");
+    return {
+      success: true,
+      body: data,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      body: error.message,
+    };
+  }
+};
+
+export { fetchProducts, fetchCategories };
