@@ -1,6 +1,7 @@
 "use strict"; // Activa el modo estricto para que JavaScript detecte errores comunes.
 
 import { fetchProducts, fetchCategories } from './functions.js'; // Importa las funciones desde el archivo functions.js.
+import { saveVote } from './firebase.js'; // Importa la función saveVote desde firebase.js.
 
 /**
  * Carga y renderiza las categorías disponibles en el elemento select con id "categories".
@@ -47,6 +48,43 @@ const showVideo = () => {
     if (demoElement) {
         demoElement.addEventListener('click', () => {
             window.open('https://www.youtube.com', '_blank'); // Abre YouTube en una nueva pestaña al hacer clic.
+        });
+    }
+};
+
+/**
+ * Configura el formulario de votación para guardar votos en Firebase.
+ * @returns {void}
+ */
+const enableForm = () => {
+    // Obtiene la referencia al formulario con id 'form_voting'
+    const form = document.getElementById('form_voting');
+    
+    if (form) {
+        // Agrega un listener para el evento 'submit' del formulario
+        form.addEventListener('submit', async (event) => {
+            // Previene el comportamiento por defecto del formulario
+            event.preventDefault();
+            
+            // Obtiene la referencia al elemento select con id 'select_product' y extrae su valor
+            const selectElement = document.getElementById('select_product');
+            const productID = selectElement?.value;
+            
+            if (!productID) {
+                alert('Por favor, selecciona un producto antes de votar.');
+                return;
+            }
+            
+            // Llama a la función saveVote con el valor obtenido
+            const result = await saveVote(productID);
+            
+            // Maneja la promesa y muestra el resultado con un mensaje de alerta
+            if (result.status === 'success') {
+                alert(`✓ ${result.message}`);
+                form.reset(); // Limpia el formulario después de guardar exitosamente
+            } else {
+                alert(`✗ ${result.message}`);
+            }
         });
     }
 };
@@ -103,4 +141,5 @@ const renderProducts = () => {
     showVideo(); // Activa el evento para el botón de video.
     renderProducts(); // Llama a renderProducts para cargar y mostrar los productos.
     renderCategories(); // Llama a renderCategories para cargar y mostrar las categorías.
+    enableForm(); // Configura el formulario de votación para guardar datos en Firebase.
 })();
