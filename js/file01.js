@@ -1,6 +1,7 @@
 "use strict"; // Activa el modo estricto para que JavaScript detecte errores comunes.
 
 import { fetchProducts, fetchCategories } from './functions.js'; // Importa las funciones desde el archivo functions.js.
+import { saveVote } from './firebase.js';
 
 /**
  * Carga y renderiza las categorías disponibles en el elemento select con id "categories".
@@ -49,6 +50,26 @@ const showVideo = () => {
             window.open('https://www.youtube.com', '_blank'); // Abre YouTube en una nueva pestaña al hacer clic.
         });
     }
+};
+
+const enableForm = () => {
+    const form = document.getElementById('form_voting');
+    if (!form) return;
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const selectProduct = document.getElementById('select_product');
+        const productID = selectProduct ? selectProduct.value : '';
+
+        if (!productID) {
+            alert('Por favor seleccione un producto antes de votar.');
+            return;
+        }
+
+        const result = await saveVote(productID);
+        alert(result.mensaje);
+    });
 };
 
 /**
@@ -103,4 +124,5 @@ const renderProducts = () => {
     showVideo(); // Activa el evento para el botón de video.
     renderProducts(); // Llama a renderProducts para cargar y mostrar los productos.
     renderCategories(); // Llama a renderCategories para cargar y mostrar las categorías.
+    enableForm(); // Configura el envío del formulario de votación.
 })();
