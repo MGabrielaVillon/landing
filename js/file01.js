@@ -1,7 +1,8 @@
 "use strict"; // Activa el modo estricto para que JavaScript detecte errores comunes.
 
 import { fetchProducts, fetchCategories } from './functions.js'; // Importa las funciones desde el archivo functions.js.
-import { saveVote } from './firebase.js'; // Importa la función saveVote desde firebase.js.
+// 1. Importar getVotes junto con saveVote desde firebase.js
+import { saveVote, getVotes } from './firebase.js';
 
 /**
  * Carga y renderiza las categorías disponibles en el elemento select con id "categories".
@@ -42,7 +43,6 @@ const showToast = () => {
     }
 };
 
-
 const showVideo = () => {
     const demoElement = document.getElementById('demo'); // Obtiene el elemento con id 'demo'.
     if (demoElement) {
@@ -50,6 +50,26 @@ const showVideo = () => {
             window.open('https://www.youtube.com', '_blank'); // Abre YouTube en una nueva pestaña al hacer clic.
         });
     }
+};
+
+const enableForm = () => {
+    const form = document.getElementById('form_voting');
+    if (!form) return;
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const selectProduct = document.getElementById('select_product');
+        const productID = selectProduct ? selectProduct.value : '';
+
+        if (!productID) {
+            alert('Por favor seleccione un producto antes de votar.');
+            return;
+        }
+
+        const result = await saveVote(productID);
+        alert(result.mensaje);
+    });
 };
 
 /**
@@ -135,11 +155,71 @@ const renderProducts = () => {
         });
 };
 
+/**
+ * 2, 3 y 4. Función asíncrona tipo flecha para obtener y mostrar los votos en una tabla.
+ */
+const displayVotes = async () => {
+    try {
+        const result = await getVotes();
+        const resultsContainer = document.getElementById('results');
 
+        if (!resultsContainer) {
+            return;
+        }
+
+        if (result.estado !== 'success' || !result.datos) {
+            resultsContainer.innerHTML = `
+                <p class="text-gray-500 text-center mt-16">${result.mensaje || 'No hay votos disponibles.'}</p>
+            `;
+            return;
+        }
+
+        const votesArray = Object.values(result.datos);
+        const totalsByProduct = votesArray.reduce((acc, vote) => {
+            const productID = vote.productID || vote.producto || vote.product || 'Producto desconocido';
+            acc[productID] = (acc[productID] || 0) + 1;
+            return acc;
+        }, {});
+
+        let tableHTML = `
+            <table border="1" style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr>
+                        <th style="padding: 8px;">Producto</th>
+                        <th style="padding: 8px;">Total de Votos</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        Object.entries(totalsByProduct).forEach(([product, total]) => {
+            tableHTML += `
+                <tr>
+                    <td style="padding: 8px;">${product}</td>
+                    <td style="padding: 8px;">${total}</td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+
+        resultsContainer.innerHTML = tableHTML;
+    } catch (error) {
+        console.error(`Error al mostrar los votos: ${error.message}`);
+    }
+};
+
+// Función de autoejecución (IIFE)
 (() => {
     showToast(); // Muestra el toast al cargar la página.
     showVideo(); // Activa el evento para el botón de video.
     renderProducts(); // Llama a renderProducts para cargar y mostrar los productos.
     renderCategories(); // Llama a renderCategories para cargar y mostrar las categorías.
-    enableForm(); // Configura el formulario de votación para guardar datos en Firebase.
+    enableForm(); // Configura el envío del formulario de votación.
+    
+    // 6. Invoca la función displayVotes al cargar
+    displayVotes(); 
 })();
